@@ -4,27 +4,23 @@ import { FaSearch, FaCheckCircle, FaDoorOpen } from 'react-icons/fa'
 import { GoXCircleFill } from "react-icons/go";
 import { RiRefreshFill } from "react-icons/ri";
 import { useContext, useEffect, useState } from 'react'
-import { EmployeeContext } from '../../context/employee_context';
 import { useNavigate } from 'react-router-dom';
 import { WithdrawContext } from '../../context/withdraw_context';
 import { Withdraw } from '../../../@clean/shared/domain/entities/withdraw';
-import { IoIosCloseCircle } from "react-icons/io";
 
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import CreateLaptopModal from '../../components/createLaptopModal';
 
 export default function Retirada(){
-    const [modal, setModal] = useState(false)
     const [serial, setSerial] = useState('')
     const [filter, setFilter] = useState('')
     const [typeFilter, setTypeFilter] = useState('')
+    const [typeModal, setTypeModal] = useState<'create'|'delete'>('create')
 
-    const [email, setEmail] = useState('')
-    const [oldPassword, setOldPassword] = useState('')
-    const [newPassword, setNewPassword] = useState('')
-
-    const { isLogged, updatePassword } = useContext(EmployeeContext)
     const { setWithdraws, getAllWithdraws, updateWithdrawState, finishWithdraw, withdraws } = useContext(WithdrawContext)
+
+    const [isCreateLaptopOpen, setIsCreateLaptopOpen] = useState(false)
 
     function filterWithdraws(filter: string, typeFilter: string, withdrawList: Withdraw[] | undefined = withdraws) {
         if(typeFilter == 'ra'){
@@ -39,6 +35,11 @@ export default function Retirada(){
     }
 
     const navigate = useNavigate()
+
+    useEffect(() => {
+        const token = localStorage.getItem('token')
+        if(!token) navigate('/')
+    }, [])
 
     function getAll() {
         getAllWithdraws()
@@ -139,32 +140,9 @@ export default function Retirada(){
         }
     }
 
-    async function postNewPassword(email: string, oldPassword: string, newPassword: string){
-        const response = await updatePassword(email, oldPassword, newPassword)
-        if(response){
-            setModal(false)
-            return toast.success("Senha alterada com sucesso", {
-                position: "top-center",
-                autoClose: 3000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                progress: undefined,
-                theme: "light"
-            });
-        }else{
-            return toast.error("Erro ao alterar senha", {
-                position: "top-center",
-                autoClose: 3000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                progress: undefined,
-                theme: "light"
-            });
-        }
+    const toggleCreateLaptop = (type:"delete"|"create") => {
+        setTypeModal(type)
+        setIsCreateLaptopOpen(!isCreateLaptopOpen)
     }
 
     function Logout(){
@@ -172,41 +150,42 @@ export default function Retirada(){
         navigate('/')
     }
 
-    function Verify(){
-        const timeNow = new Date().getTime()
-        const timeLogin = localStorage.getItem('timeLogin')
-        if(timeLogin){
-            const time = new Date(Number(timeLogin)).getTime()
-            if((timeNow - time) > (7*24*60*60*1000)){
-                localStorage.removeItem('token')
-                navigate('/')
-            }
-        }
-    }
+    // function Verify(){
+    //     const timeNow = new Date().getTime()
+    //     const timeLogin = localStorage.getItem('timeLogin')
+    //     if(timeLogin){
+    //         const time = new Date(Number(timeLogin)).getTime()
+    //         if((timeNow - time) > (7*24*60*60*1000)){
+    //             localStorage.removeItem('token')
+    //             navigate('/')
+    //         }
+    //     }
+    // }
 
     useEffect(() => {
-        const token = localStorage.getItem('token')
-        if(!isLogged && !token) navigate('/')
+        // const token = localStorage.getItem('token')
+        // if(!isLogged && !token) navigate('/')
 
-        Verify()
+        // Verify()
         getAll()
     }, [])
 
     return (
         <>
+            <CreateLaptopModal isOpen={isCreateLaptopOpen} onClose={()=>toggleCreateLaptop(typeModal)} type={typeModal} />
         <section className='h-screen bg-azul-claro flex flex-col justify-around items-center gap-4 p-4'>
             <ToastContainer position="top-center" autoClose={3000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover theme="light" />
             <img src={logo} alt="Logo da NoteMaua" />
             <div className="bg-branco border-[12px] border-cinza-escuro rounded-3xl w-[80%] h-[70%] p-8">
-                <div className='flex items-center'>
+                <div className='flex justify-between items-center'>
                     <div className='flex gap-4'>
                         <button onClick={()=>Logout()} className='flex items-center gap-2 bg-red-500 px-4 py-1 rounded-lg text-white hover:bg-red-400'>Sair<FaDoorOpen/></button>
-                        <button onClick={()=>setModal(true)} className='w-32 bg-azul flex items-center gap-2 px-4 py-1 rounded-lg text-white hover:bg-blue-500'>Alterar Senha</button>
+                        {/* <button onClick={()=>setModal(true)} className='w-32 bg-azul flex items-center gap-2 px-4 py-1 rounded-lg text-white hover:bg-blue-500'>Alterar Senha</button> */}
                     </div>
-                    <div className='flex justify-center gap-4 w-full'>
+                    {/* <div className='flex justify-center gap-4 w-full'>
                         <input onChange={(e)=>setSerial(e.target.value)} className='bg-cinza-claro px-2 py-1 shadow-xl rounded-md' type="number" placeholder='Número de série' value={serial} />
                         <button type='button' className='bg-verde hover:bg-green-400 font-semibold px-6 shadow-xl py-1 rounded-md' onClick={()=>endWithdraw(serial)}>Confirmar devolução</button>
-                    </div>
+                    </div> */}
                     <div>
                         <RiRefreshFill onClick={()=>getAll()} className='text-4xl hover:cursor-pointer'/>
                     </div>
@@ -214,14 +193,20 @@ export default function Retirada(){
 
                 <div className='w-full h-[1px] mt-8 mb-2 bg-black'/>
             
-                <div className='flex items-center gap-4 my-6'>
-                    <input onChange={(e)=>setFilter(e.target.value)} type="text" className='bg-cinza-claro px-2 py-1 shadow-xl rounded-md' placeholder='Pesquisar'/>
-                    <select onChange={(e)=>setTypeFilter(e.target.value)} className='w-32 h-8 rounded-md border-[1px] border-black text-center'>
-                        <option value="">-- Escolha --</option>
-                        <option value="ra">Ra do Aluno</option>
-                        <option value="serialNumber">Número de série</option>
-                    </select>
-                    <button onClick={()=>filterWithdraws(filter, typeFilter)} className='text-xl'><FaSearch/></button>
+                <div className='flex justify-between items-center gap-2 my-6 flex-wrap'>
+                    <div className='flex items-center gap-4'>
+                        <input onChange={(e)=>setFilter(e.target.value)} type="text" className='bg-cinza-claro px-2 py-1 shadow-xl rounded-md' placeholder='Pesquisar'/>
+                        <select onChange={(e)=>setTypeFilter(e.target.value)} className='w-32 h-8 rounded-md border-[1px] border-black text-center'>
+                            <option value="">-- Escolha --</option>
+                            <option value="ra">Ra do Aluno</option>
+                            <option value="serialNumber">Número de série</option>
+                        </select>
+                            <button onClick={() => filterWithdraws(filter, typeFilter)} className='text-xl'><FaSearch /></button>
+                    </div>
+                    <div className='flex gap-2'>
+                        <button onClick={()=>toggleCreateLaptop("create")} className='h-8 px-3 flex items-center justify-center bg-green-500 text-white rounded-lg hover:bg-green-600 duration-200 hover:cursor-pointer'>Adicionar Notebook</button>
+                        <button onClick={()=>toggleCreateLaptop("delete")} className='h-8 px-3 flex items-center justify-center bg-red-500 text-white rounded-lg hover:bg-red-600 duration-200 hover:cursor-pointer'>Deletar Notebook</button>
+                    </div>
                 </div>
 
                 <div className='relative h-[70%] overflow-y-auto'>
@@ -269,7 +254,7 @@ export default function Retirada(){
                                 </td>
                                 <td>
                                     <div className='flex justify-around rounded-lg m-1 p-4 bg-cinza-claro text-center text-lg font-bold underline'>
-                                        <FaCheckCircle className="text-2xl text-verde" />
+                                        <FaCheckCircle onClick={()=>endWithdraw(cell.notebookSerialNumber)} className="text-2xl text-verde hover:cursor-pointer" />
                                     </div>
                                 </td>
                             </tr>
@@ -317,40 +302,6 @@ export default function Retirada(){
             </div>
             <img src={logoMaua} alt="Logo da NoteMaua" />
         </section>
-
-        {/* <!-- Main modal --> */}
-        <div id="default-modal" tabIndex={-1} aria-hidden="true" className={`${modal ? "" : "hidden"} bg-[rgba(0,0,0,0.5)] overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-full`}>
-            <div className="relative top-[25%] left-[35%] p-4 w-full max-w-lg max-h-full">
-                {/* <!-- Modal content --> */}
-                <div className="relative bg-branco rounded-xl shadow border-[12px] border-cinza-escuro p-8">
-                    {/* <!-- Modal header --> */}
-                    <div className='flex items-center justify-between mb-8'>
-                        <h3 className="text-2xl font-bold text-center">Alterar Senha</h3>
-                        <IoIosCloseCircle onClick={()=>setModal(false)} className='cursor-pointer' size={24}/>
-                    </div>
-                    {/* <!-- Modal body --> */}
-                    <div className="flex flex-col gap-8">
-                        <div className='flex flex-col'>
-                            <label className='text-md'>Email</label>
-                            <input onChange={(e)=>setEmail(e.target.value)} className="bg-gray-400 shadow-2xl p-2 rounded-xl" type="text" />
-                        </div>
-                        <div className='flex flex-col'>
-                            <label className='text-md'>Antiga Senha</label>
-                            <input onChange={(e) => setOldPassword(e.target.value)} className="bg-gray-400 shadow-2xl p-2 rounded-xl" type="password" />
-                        </div>
-                        <div className='flex flex-col'>
-                            <label className='text-md'>Nova Senha</label>
-                            <input onChange={(e)=>setNewPassword(e.target.value)} className="bg-gray-400 shadow-2xl p-2 rounded-xl" type="password" />
-                        </div>
-                    </div>
-                    {/* <!-- Modal footer --> */}
-                    <div className="flex justify-center items-center p-4 md:p-5">
-                        <button type='button' className='bg-azul text-white font-semibold px-6 shadow-xl py-1 rounded-md' onClick={()=>postNewPassword(email, oldPassword, newPassword)}>Alterar Senha</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         </>
     )
 }

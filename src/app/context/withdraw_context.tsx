@@ -13,6 +13,8 @@ export type withdrawContextType = {
   setWithdraws(withdraws: Withdraw[]): void;
   updateWithdrawState: (notebookSerialNumber: string, state: boolean) => Promise<string | undefined>;
   finishWithdraw: (notebookSerialNumber: string) => Promise<string | undefined>;
+  createLaptop: (notebookSerialNumber: string) => Promise<string | undefined>;
+  deleteLaptop: (notebookSerialNumber: string) => Promise<string | undefined>;
 };
 
 const defaultWithdrawContext: withdrawContextType = {
@@ -25,7 +27,12 @@ const defaultWithdrawContext: withdrawContextType = {
   updateWithdrawState: async(notebookSerialNumber: string, state: boolean) => {
     return "";
   },
-
+  createLaptop: async(notebookSerialNumber: string) => {
+    return "";
+  },
+  deleteLaptop: async(notebookSerialNumber: string) => {
+    return "";
+  },
   setWithdraws: (data: Withdraw[]) => void 0,
   withdraws: [],
 };
@@ -42,6 +49,14 @@ const updateWithdrawStateUsecase = containerWithdraw.get<UpdateWithdrawUsecase>(
 
 const finishWithdrawUsecase = containerWithdraw.get<FinishWithdrawUsecase>(
   RegistryWithdraw.FinishWithdrawUsecase
+);
+
+const createLaptopUsecase = containerWithdraw.get<FinishWithdrawUsecase>(
+  RegistryWithdraw.CreateLaptopUsecase
+);
+
+const deleteLaptopUsecase = containerWithdraw.get<FinishWithdrawUsecase>(
+  RegistryWithdraw.DeleteLaptopUsecase
 );
 
 export function WithdrawContextProvider({ children }: PropsWithChildren) {
@@ -74,6 +89,25 @@ export function WithdrawContextProvider({ children }: PropsWithChildren) {
       console.error("Something went wrong with finishWithdraw: ", error);
     }
   }
+
+  async function createLaptop(notebookSerialNumber: string) {
+    try {
+      const message = await createLaptopUsecase.execute(notebookSerialNumber);
+      return message;
+    } catch (error: any) {
+      console.error("Something went wrong with createLaptop: ", error);
+    }
+  }
+  
+  async function deleteLaptop(notebookSerialNumber: string) {
+    try {
+      const message = await deleteLaptopUsecase.execute(notebookSerialNumber);
+      return message;
+    } catch (error: any) {
+      console.error("Something went wrong with deleteLaptop: ", error);
+    }
+  }
+
   return (
     <WithdrawContext.Provider
       value={{
@@ -82,6 +116,8 @@ export function WithdrawContextProvider({ children }: PropsWithChildren) {
         setWithdraws,
         updateWithdrawState,
         finishWithdraw,
+        createLaptop,
+        deleteLaptop,
       }}
     >
       {children}
