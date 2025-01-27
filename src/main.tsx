@@ -10,7 +10,7 @@ import { PublicClientApplication } from "@azure/msal-browser";
 const msalConfig = {
   auth: {
     clientId: import.meta.env.VITE_CLIENT_ID,
-    authority: 'https://login.microsoftonline.com/common',
+    authority: 'https://login.microsoftonline.com/c49e1939-4b53-4738-bb64-41fb2990e41c/login',
     redirectUri: import.meta.env.VITE_REDIRECT_URI,
   },
   cache: {
